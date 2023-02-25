@@ -20,7 +20,7 @@ export default function App() {
     function createNewNote() {
         const newNote = {
             id: nanoid(),
-            body: "# Type your markdown note's title here"
+            body: "# Type your notes here"
         }
         setNotes(prevNotes => [newNote, ...prevNotes])
         setCurrentNoteId(newNote.id)
