@@ -5,6 +5,7 @@ import Split from "react-split";
 import { nanoid } from "nanoid";
 import axios from "axios";
 
+
 export default function App() {
   const [notes, setNotes] = React.useState([]);
   const [currentNoteId, setCurrentNoteId] = React.useState("");
@@ -15,7 +16,7 @@ export default function App() {
 
   async function fetchNotes() {
     try {
-      const response = await axios.get("/api/notes");
+      const response = await axios.get("https://xvgkr5-3001.csb.app/api/notes");
       setNotes(response.data);
       setCurrentNoteId(response.data[0] && response.data[0].id);
     } catch (error) {
@@ -29,7 +30,7 @@ export default function App() {
       body: "# Type your notes here",
     };
     try {
-      await axios.post("/api/notes", newNote);
+      await axios.post("https://xvgkr5-3001.csb.app/api/notes", newNote);
       fetchNotes();
     } catch (error) {
       console.error("Error creating new note:", error);
@@ -38,7 +39,7 @@ export default function App() {
 
   async function updateNote(text) {
     try {
-      await axios.put(`/api/notes/${currentNoteId}`, { body: text });
+      await axios.put(`https://xvgkr5-3001.csb.app/api/notes/${currentNoteId}`, { body: text });
       fetchNotes();
     } catch (error) {
       console.error("Error updating note:", error);
@@ -48,7 +49,7 @@ export default function App() {
   async function deleteNote(event, noteId) {
     event.stopPropagation();
     try {
-      await axios.delete(`/api/notes/${noteId}`);
+      await axios.delete(`https://xvgkr5-3001.csb.app/api/notes/${noteId}`);
       fetchNotes();
     } catch (error) {
       console.error("Error deleting note:", error);
