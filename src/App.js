@@ -1,96 +1,89 @@
-import React from "react"
-import Sidebar from "./components/Sidebar"
-import Editor from "./components/Editor"
-import Split from "react-split"
-import {nanoid} from "nanoid"
+import React from "react";
+import Sidebar from "./components/Sidebar";
+import Editor from "./components/Editor";
+import Split from "react-split";
+import { nanoid } from "nanoid";
+import axios from "axios";
 
 export default function App() {
-    const [notes, setNotes] = React.useState(
-        () => JSON.parse(localStorage.getItem("notes")) || []
-    )
-    const [currentNoteId, setCurrentNoteId] = React.useState(
-        (notes[0] && notes[0].id) || ""
-    )
-    
-    React.useEffect(() => {
-        localStorage.setItem("notes", JSON.stringify(notes))
-    }, [notes])
-    
-    function createNewNote() {
-        const newNote = {
-            id: nanoid(),
-            body: "# Type your notes here"
-        }
-        setNotes(prevNotes => [newNote, ...prevNotes])
-        setCurrentNoteId(newNote.id)
+  const [notes, setNotes] = React.useState([]);
+  const [currentNoteId, setCurrentNoteId] = React.useState("");
+
+  React.useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  async function fetchNotes() {
+    try {
+      const response = await axios.get("/api/notes");
+      setNotes(response.data);
+      setCurrentNoteId(response.data[0] && response.data[0].id);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
     }
-    
-    function updateNote(text) {
-        setNotes(oldNotes => {
-            const newArray = []
-            for(let i = 0; i < oldNotes.length; i++) {
-                const oldNote = oldNotes[i]
-                if(oldNote.id === currentNoteId) {
-                    newArray.unshift({ ...oldNote, body: text })
-                } else {
-                    newArray.push(oldNote)
-                }
-            }
-            return newArray
-        })
+  }
+
+  async function createNewNote() {
+    const newNote = {
+      id: nanoid(),
+      body: "# Type your notes here",
+    };
+    try {
+      await axios.post("/api/notes", newNote);
+      fetchNotes();
+    } catch (error) {
+      console.error("Error creating new note:", error);
     }
-    
-   
-    
-    function deleteNote(event, noteId) {
-        event.stopPropagation()
-        setNotes(oldNotes => oldNotes.filter(note => note.id !== noteId))
+  }
+
+  async function updateNote(text) {
+    try {
+      await axios.put(`/api/notes/${currentNoteId}`, { body: text });
+      fetchNotes();
+    } catch (error) {
+      console.error("Error updating note:", error);
     }
-    
-    function findCurrentNote() {
-        return notes.find(note => {
-            return note.id === currentNoteId
-        }) || notes[0]
+  }
+
+  async function deleteNote(event, noteId) {
+    event.stopPropagation();
+    try {
+      await axios.delete(`/api/notes/${noteId}`);
+      fetchNotes();
+    } catch (error) {
+      console.error("Error deleting note:", error);
     }
-    
-    return (
-        <main>
-        {
-            notes.length > 0 
-            ?
-            <Split 
-                sizes={[30, 70]} 
-                direction="horizontal" 
-                className="split"
-            >
-                <Sidebar
-                    notes={notes}
-                    currentNote={findCurrentNote()}
-                    setCurrentNoteId={setCurrentNoteId}
-                    newNote={createNewNote}
-                    deleteNote={deleteNote}
-                />
-                {
-                    currentNoteId && 
-                    notes.length > 0 &&
-                    <Editor 
-                        currentNote={findCurrentNote()} 
-                        updateNote={updateNote} 
-                    />
-                }
-            </Split>
-            :
-            <div className="no-notes">
-                <h1>You have no notes</h1>
-                <button 
-                    className="first-note" 
-                    onClick={createNewNote}
-                >
-                    Create one now
-                </button>
-            </div>
-            
-        }
-        </main>
-    )
+  }
+
+  function findCurrentNote() {
+    return notes.find((note) => {
+      return note.id === currentNoteId;
+    }) || notes[0];
+  }
+
+  return (
+    <main>
+      {notes.length > 0 ? (
+        <Split sizes={[30, 70]} direction="horizontal" className="split">
+          <Sidebar
+            notes={notes}
+            currentNote={findCurrentNote()}
+            setCurrentNoteId={setCurrentNoteId}
+            newNote={createNewNote}
+            deleteNote={deleteNote}
+          />
+          {currentNoteId && notes.length > 0 && (
+            <Editor currentNote={findCurrentNote()} updateNote={updateNote} />
+          )}
+        </Split>
+      ) : (
+        <div className="no-notes">
+          <h1>You have no notes</h1>
+          <button className="first-note" onClick={createNewNote}>
+            Create one now
+          </button>
+        </div>
+      )}
+    </main>
+  );
 }
